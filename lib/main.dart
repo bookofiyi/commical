@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:archive/archive.dart';
+import 'dart:io';
+import 'dart:typed_data';
 
 void main() {
   runApp(const MyApp());
@@ -31,6 +34,25 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String? selectedFilePath;
+  List<Uint8List> _images = [];
+
+  Future<void> _extractImages(String filePath) async {
+    final file = File(filePath);
+    final bytes = await file.readAsBytes();
+    final archive = ZipDecoder().decodeBytes(bytes);
+
+    List<Uint8List> extractedImages = [];
+    for (final file in archive) {
+      if (file.isFile &&
+          (file.name.endsWith('.jpg') || file.name.endsWith('.png'))) {
+        extractedImages.add(Uint8List.fromList(file.content));
+      }
+    }
+
+    setState(() {
+      _images = extractedImages;
+    });
+  }
 
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -42,6 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         selectedFilePath = result.files.single.path;
       });
+      _extractImages(selectedFilePath!);
     }
   }
 
@@ -52,12 +75,23 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[const Text('No comic selected')],
-        ),
-      ),
+      body:
+          _images.isEmpty
+              ? Center(
+                child:
+                    selectedFilePath == null
+                        ? const Text('No comic selected')
+                        : const Text('Extracting images...'),
+              )
+              : ListView.builder(
+                itemCount: _images.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Image.memory(_images[index]),
+                  );
+                },
+              ),
       floatingActionButton: FloatingActionButton(
         onPressed: _pickFile,
         tooltip: 'Increment',
