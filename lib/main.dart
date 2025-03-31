@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
 import 'dart:io';
 import 'dart:typed_data';
+import 'bookshelf.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,7 +20,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Commical'),
+      home: const Bookshelf(),
+      // home: const MyHomePage(title: 'Commical'),
     );
   }
 }
